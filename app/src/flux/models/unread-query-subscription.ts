@@ -5,6 +5,7 @@ import { Matcher } from '../attributes/matcher';
 import { Thread } from '../models/thread';
 import { Model } from '../models/model';
 import ModelQuery from './query';
+import { applySortOrderToQuery } from '../stores/thread-list-sort-utils';
 
 const buildQuery = categoryIds => {
   const unreadMatchers = new Matcher.And([
@@ -26,22 +27,7 @@ const buildQuery = categoryIds => {
   }
 
   // Apply sort order based on user preference
-  const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
-  switch (sortOrder) {
-    case 'subject':
-      query.order(Thread.attributes.subject.ascending());
-      break;
-    case 'contact':
-      query.order(Thread.attributes.firstMessageTimestamp.descending());
-      break;
-    case 'size':
-      query.order(Thread.attributes.attachmentCount.descending());
-      break;
-    case 'date':
-    default:
-      query.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
-      break;
-  }
+  applySortOrderToQuery(query, false);
 
   return query;
 };

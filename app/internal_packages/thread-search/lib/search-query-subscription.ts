@@ -7,6 +7,7 @@ import {
   ComponentRegistry,
   MutableQuerySubscription,
 } from 'mailspring-exports';
+import { applySortOrderToQuery } from '../../src/flux/stores/thread-list-sort-utils';
 
 class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searchQuery: string;
@@ -49,22 +50,7 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     dbQuery = dbQuery.background().limit(1000);
 
     // Apply sort order based on user preference
-    const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
-    switch (sortOrder) {
-      case 'subject':
-        dbQuery = dbQuery.order(Thread.attributes.subject.ascending());
-        break;
-      case 'contact':
-        dbQuery = dbQuery.order(Thread.attributes.firstMessageTimestamp.descending());
-        break;
-      case 'size':
-        dbQuery = dbQuery.order(Thread.attributes.attachmentCount.descending());
-        break;
-      case 'date':
-      default:
-        dbQuery = dbQuery.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
-        break;
-    }
+    applySortOrderToQuery(dbQuery, false);
 
     this.replaceQuery(dbQuery);
   }
@@ -84,25 +70,10 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       const currentResultIds = this._set.ids();
       searchIds = _.uniq(currentResultIds.concat(ids));
     }
-    let dbQuery = DatabaseStore.findAll<Thread>(Thread).where({ id: searchIds });
+    const dbQuery = DatabaseStore.findAll<Thread>(Thread).where({ id: searchIds });
 
     // Apply sort order based on user preference
-    const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
-    switch (sortOrder) {
-      case 'subject':
-        dbQuery = dbQuery.order(Thread.attributes.subject.ascending());
-        break;
-      case 'contact':
-        dbQuery = dbQuery.order(Thread.attributes.firstMessageTimestamp.descending());
-        break;
-      case 'size':
-        dbQuery = dbQuery.order(Thread.attributes.attachmentCount.descending());
-        break;
-      case 'date':
-      default:
-        dbQuery = dbQuery.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
-        break;
-    }
+    applySortOrderToQuery(dbQuery, false);
 
     this.replaceQuery(dbQuery);
   }

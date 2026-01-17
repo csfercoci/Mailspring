@@ -20,6 +20,7 @@ import { Folder } from './flux/models/folder';
 import { Task } from './flux/tasks/task';
 import * as Actions from './flux/actions';
 import { QuerySubscription } from 'mailspring-exports';
+import { applySortOrderToQuery } from './flux/stores/thread-list-sort-utils';
 
 let WorkspaceStore = null;
 let ChangeStarredTask = null;
@@ -176,32 +177,7 @@ export class MailboxPerspective {
 
   // Helper method to apply sort order to a query based on user preference
   _applySortOrder(query: any) {
-    const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
-    
-    switch (sortOrder) {
-      case 'subject':
-        query.order(Thread.attributes.subject.ascending());
-        break;
-      case 'contact':
-        // Sort by participants is complex since it's a collection.
-        // As a practical approach, we'll sort by first message timestamp
-        // which often correlates with the primary correspondent
-        query.order(Thread.attributes.firstMessageTimestamp.descending());
-        break;
-      case 'size':
-        // Sort by attachment count as a proxy for thread size
-        query.order(Thread.attributes.attachmentCount.descending());
-        break;
-      case 'date':
-      default:
-        // Default to date sorting
-        if (this.isSent()) {
-          query.order(Thread.attributes.lastMessageSentTimestamp.descending());
-        } else {
-          query.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
-        }
-        break;
-    }
+    applySortOrderToQuery(query, this.isSent());
   }
 
   unreadCount(): number {

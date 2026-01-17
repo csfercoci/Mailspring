@@ -34,6 +34,13 @@ class ThreadListStore extends MailspringStore {
   };
 
   setSortOrder = (sortOrder: string) => {
+    // Validate sort order
+    const validSortOrders = ['date', 'subject', 'contact', 'size'];
+    if (!validSortOrders.includes(sortOrder)) {
+      console.error(`Invalid sort order: ${sortOrder}. Using default 'date'.`);
+      sortOrder = 'date';
+    }
+
     if (this._sortOrder !== sortOrder) {
       this._sortOrder = sortOrder;
       AppEnv.config.set('core.threadList.sortOrder', sortOrder);
