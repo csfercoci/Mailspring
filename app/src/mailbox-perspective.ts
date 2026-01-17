@@ -174,6 +174,36 @@ export class MailboxPerspective {
     throw new Error('threads: Not implemented in base class.');
   }
 
+  // Helper method to apply sort order to a query based on user preference
+  _applySortOrder(query: any) {
+    const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
+    
+    switch (sortOrder) {
+      case 'subject':
+        query.order(Thread.attributes.subject.ascending());
+        break;
+      case 'contact':
+        // Sort by participants is complex since it's a collection.
+        // As a practical approach, we'll sort by first message timestamp
+        // which often correlates with the primary correspondent
+        query.order(Thread.attributes.firstMessageTimestamp.descending());
+        break;
+      case 'size':
+        // Sort by attachment count as a proxy for thread size
+        query.order(Thread.attributes.attachmentCount.descending());
+        break;
+      case 'date':
+      default:
+        // Default to date sorting
+        if (this.isSent()) {
+          query.order(Thread.attributes.lastMessageSentTimestamp.descending());
+        } else {
+          query.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+        }
+        break;
+    }
+  }
+
   unreadCount(): number {
     return 0;
   }
@@ -291,6 +321,8 @@ class StarredMailboxPerspective extends MailboxPerspective {
       query.where(Thread.attributes.accountId.in(this.accountIds));
     }
 
+    this._applySortOrder(query);
+
     return new MutableQuerySubscription<Thread>(query, {
       emitResultSet: true,
       updateOnSeparateThread: true,
@@ -384,9 +416,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       .where([Thread.attributes.categories.containsAny(this.categories().map(c => c.id))])
       .limit(0);
 
-    if (this.isSent()) {
-      query.order(Thread.attributes.lastMessageSentTimestamp.descending());
-    }
+    this._applySortOrder(query);
 
     if (!['spam', 'trash'].includes(this.categoriesSharedRole())) {
       query.where({ inAllMail: true });

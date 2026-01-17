@@ -15,15 +15,30 @@ import ThreadListDataSource from './thread-list-data-source';
 class ThreadListStore extends MailspringStore {
   _dataSource?: ListDataSource;
   _dataSourceUnlisten: () => void;
+  _sortOrder: string = 'date';
 
   constructor() {
     super();
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
+    // Load saved sort order
+    this._sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
     this.createListDataSource();
   }
 
   dataSource = () => {
     return this._dataSource;
+  };
+
+  sortOrder = () => {
+    return this._sortOrder;
+  };
+
+  setSortOrder = (sortOrder: string) => {
+    if (this._sortOrder !== sortOrder) {
+      this._sortOrder = sortOrder;
+      AppEnv.config.set('core.threadList.sortOrder', sortOrder);
+      this.createListDataSource();
+    }
   };
 
   createListDataSource = () => {
