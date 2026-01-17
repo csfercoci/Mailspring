@@ -17,12 +17,30 @@ const buildQuery = categoryIds => {
 
   // The "Unread" view shows all threads which are unread. When you read a thread,
   // it doesn't disappear until you leave the view and come back. This behavior
-  // is implemented by keeping track of messages being rea and manually
+  // is implemented by keeping track of messages being read and manually
   // whitelisting them in the query.
   if (RecentlyReadStore.ids.length === 0) {
     query.where(unreadMatchers);
   } else {
     query.where(new Matcher.Or([unreadMatchers, Thread.attributes.id.in(RecentlyReadStore.ids)]));
+  }
+
+  // Apply sort order based on user preference
+  const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
+  switch (sortOrder) {
+    case 'subject':
+      query.order(Thread.attributes.subject.ascending());
+      break;
+    case 'contact':
+      query.order(Thread.attributes.firstMessageTimestamp.descending());
+      break;
+    case 'size':
+      query.order(Thread.attributes.attachmentCount.descending());
+      break;
+    case 'date':
+    default:
+      query.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+      break;
   }
 
   return query;

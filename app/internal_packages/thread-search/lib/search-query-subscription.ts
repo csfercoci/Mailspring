@@ -46,10 +46,25 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       console.info('Failed to parse local search query, falling back to generic query', e);
       dbQuery = dbQuery.search(this._searchQuery);
     }
-    dbQuery = dbQuery
-      .background()
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
-      .limit(1000);
+    dbQuery = dbQuery.background().limit(1000);
+
+    // Apply sort order based on user preference
+    const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
+    switch (sortOrder) {
+      case 'subject':
+        dbQuery = dbQuery.order(Thread.attributes.subject.ascending());
+        break;
+      case 'contact':
+        dbQuery = dbQuery.order(Thread.attributes.firstMessageTimestamp.descending());
+        break;
+      case 'size':
+        dbQuery = dbQuery.order(Thread.attributes.attachmentCount.descending());
+        break;
+      case 'date':
+      default:
+        dbQuery = dbQuery.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+        break;
+    }
 
     this.replaceQuery(dbQuery);
   }
@@ -69,9 +84,26 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       const currentResultIds = this._set.ids();
       searchIds = _.uniq(currentResultIds.concat(ids));
     }
-    const dbQuery = DatabaseStore.findAll<Thread>(Thread)
-      .where({ id: searchIds })
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+    let dbQuery = DatabaseStore.findAll<Thread>(Thread).where({ id: searchIds });
+
+    // Apply sort order based on user preference
+    const sortOrder = AppEnv.config.get('core.threadList.sortOrder') || 'date';
+    switch (sortOrder) {
+      case 'subject':
+        dbQuery = dbQuery.order(Thread.attributes.subject.ascending());
+        break;
+      case 'contact':
+        dbQuery = dbQuery.order(Thread.attributes.firstMessageTimestamp.descending());
+        break;
+      case 'size':
+        dbQuery = dbQuery.order(Thread.attributes.attachmentCount.descending());
+        break;
+      case 'date':
+      default:
+        dbQuery = dbQuery.order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+        break;
+    }
+
     this.replaceQuery(dbQuery);
   }
 
