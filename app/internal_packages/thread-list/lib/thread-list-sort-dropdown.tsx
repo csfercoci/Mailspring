@@ -33,17 +33,19 @@ export default class ThreadListSortDropdown extends Component<ThreadListSortDrop
     ];
 
     return (
-      <ButtonDropdown
-        primaryItem={<span>{headerComponents}</span>}
-        menu={
-          <Menu
-            items={this._sortOptions}
-            itemKey={item => item.key}
-            itemContent={item => item.label}
-            onSelect={this._onSortSelected}
-          />
-        }
-      />
+      <div className="thread-list-sort-dropdown">
+        <ButtonDropdown
+          primaryItem={<span>{headerComponents}</span>}
+          menu={
+            <Menu
+              items={this._sortOptions}
+              itemKey={item => item.key}
+              itemContent={item => item.label}
+              onSelect={this._onSortSelected}
+            />
+          }
+        />
+      </div>
     );
   }
 }
