@@ -63,6 +63,17 @@ export default {
           },
         },
       },
+      threadList: {
+        type: 'object',
+        properties: {
+          sortOrder: {
+            type: 'string',
+            default: 'date',
+            enum: ['date', 'subject', 'contact', 'size'],
+            title: localized('Thread list sort order'),
+          },
+        },
+      },
       disabledPackages: {
         type: 'array',
         default: [],

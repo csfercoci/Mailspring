@@ -5,6 +5,7 @@ import { Matcher } from '../attributes/matcher';
 import { Thread } from '../models/thread';
 import { Model } from '../models/model';
 import ModelQuery from './query';
+import { applySortOrderToQuery } from '../stores/thread-list-sort-utils';
 
 const buildQuery = categoryIds => {
   const unreadMatchers = new Matcher.And([
@@ -17,13 +18,16 @@ const buildQuery = categoryIds => {
 
   // The "Unread" view shows all threads which are unread. When you read a thread,
   // it doesn't disappear until you leave the view and come back. This behavior
-  // is implemented by keeping track of messages being rea and manually
+  // is implemented by keeping track of messages being read and manually
   // whitelisting them in the query.
   if (RecentlyReadStore.ids.length === 0) {
     query.where(unreadMatchers);
   } else {
     query.where(new Matcher.Or([unreadMatchers, Thread.attributes.id.in(RecentlyReadStore.ids)]));
   }
+
+  // Apply sort order based on user preference
+  applySortOrderToQuery(query, false);
 
   return query;
 };

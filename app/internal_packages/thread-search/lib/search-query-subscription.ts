@@ -7,6 +7,7 @@ import {
   ComponentRegistry,
   MutableQuerySubscription,
 } from 'mailspring-exports';
+import { applySortOrderToQuery } from '../../src/flux/stores/thread-list-sort-utils';
 
 class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searchQuery: string;
@@ -46,10 +47,10 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       console.info('Failed to parse local search query, falling back to generic query', e);
       dbQuery = dbQuery.search(this._searchQuery);
     }
-    dbQuery = dbQuery
-      .background()
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
-      .limit(1000);
+    dbQuery = dbQuery.background().limit(1000);
+
+    // Apply sort order based on user preference
+    applySortOrderToQuery(dbQuery, false);
 
     this.replaceQuery(dbQuery);
   }
@@ -69,9 +70,11 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       const currentResultIds = this._set.ids();
       searchIds = _.uniq(currentResultIds.concat(ids));
     }
-    const dbQuery = DatabaseStore.findAll<Thread>(Thread)
-      .where({ id: searchIds })
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+    const dbQuery = DatabaseStore.findAll<Thread>(Thread).where({ id: searchIds });
+
+    // Apply sort order based on user preference
+    applySortOrderToQuery(dbQuery, false);
+
     this.replaceQuery(dbQuery);
   }
 
