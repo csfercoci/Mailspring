@@ -28,13 +28,16 @@ class SendRemindersMailboxPerspective extends MailboxPerspective {
   }
 
   threads() {
-    let query = DatabaseStore.findAll<Thread>(Thread)
-      .where(Thread.attributes.pluginMetadata.contains(PLUGIN_ID))
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+    let query = DatabaseStore.findAll<Thread>(Thread).where(
+      Thread.attributes.pluginMetadata.contains(PLUGIN_ID)
+    );
 
     if (this.accountIds.length === 1) {
       query = query.where({ accountId: this.accountIds[0] });
     }
+
+    // Apply sort order based on user preference
+    this._applySortOrder(query);
 
     return new MutableQuerySubscription<Thread>(query, { emitResultSet: true });
   }

@@ -20,6 +20,7 @@ import { Folder } from './flux/models/folder';
 import { Task } from './flux/tasks/task';
 import * as Actions from './flux/actions';
 import { QuerySubscription } from 'mailspring-exports';
+import { applySortOrderToQuery } from './flux/stores/thread-list-sort-utils';
 
 let WorkspaceStore = null;
 let ChangeStarredTask = null;
@@ -174,6 +175,11 @@ export class MailboxPerspective {
     throw new Error('threads: Not implemented in base class.');
   }
 
+  // Helper method to apply sort order to a query based on user preference
+  _applySortOrder(query: any) {
+    applySortOrderToQuery(query, this.isSent());
+  }
+
   unreadCount(): number {
     return 0;
   }
@@ -291,6 +297,8 @@ class StarredMailboxPerspective extends MailboxPerspective {
       query.where(Thread.attributes.accountId.in(this.accountIds));
     }
 
+    this._applySortOrder(query);
+
     return new MutableQuerySubscription<Thread>(query, {
       emitResultSet: true,
       updateOnSeparateThread: true,
@@ -384,9 +392,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       .where([Thread.attributes.categories.containsAny(this.categories().map(c => c.id))])
       .limit(0);
 
-    if (this.isSent()) {
-      query.order(Thread.attributes.lastMessageSentTimestamp.descending());
-    }
+    this._applySortOrder(query);
 
     if (!['spam', 'trash'].includes(this.categoriesSharedRole())) {
       query.where({ inAllMail: true });
